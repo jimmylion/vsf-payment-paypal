@@ -43,7 +43,11 @@ export default {
         return false
       }
 
-      const completed = await store.dispatch('paypal/complete', { orderId: data.orderID })
+      const completed = await store.dispatch('paypal/complete', {
+        orderId: data.orderID,
+        currency: this.currencyCode,
+        amount: this.getAmount()[0].amount.value
+      })
 
       this.$bus.$emit('checkout-do-placeOrder', completed)
 
