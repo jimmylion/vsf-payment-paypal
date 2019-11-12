@@ -48,8 +48,7 @@ export default {
         currency: this.currencyCode,
         amount: this.getAmount()[0].amount.value
       })
-
-      this.$bus.$emit('checkout-do-placeOrder', completed)
+      this.$emit('paypalSuccess');
 
       if (completed.status === 'success') {
         this.$emit('payment-paypal-completed', completed)
