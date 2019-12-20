@@ -50,7 +50,16 @@ export default {
         return segment.code === name
       })
       if (total.length > 0) {
-        return Math.abs(parseFloat(total[0].value).toFixed(2))
+        if (name === 'tax') {
+          const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
+          return Math.abs(onlyProductsTax.toFixed(2))
+        } else if (name === 'shipping') {
+          const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
+          const shippingWithoutTax = this.$store.state.cart.platformTotals.shipping_incl_tax - onlyProductsTax
+          return Math.abs(shippingWithoutTax.toFixed(2))
+        } else {
+          return Math.abs(parseFloat(total[0].value).toFixed(2))
+        }
       } else {
         return 0
       }
@@ -74,13 +83,13 @@ export default {
           name: product.name,
           unit_amount: {
             currency_code: this.currencyCode,
-            value: product.price
+            value: product.totals.price_incl_tax
           },
           tax: {
             currency_code: this.currencyCode,
-            value: ''
+            // value: ''
             // optional tax already set in totals, this is not needed
-            // value: (product.totals.price_incl_tax - product.totals.price).toFixed(2)
+            value: (product.totals.price_incl_tax - product.totals.price).toFixed(2)
           },
           description: (product.options && product.options.length > 0) ? product.options.map((el) => { return el.value }).join(',') : '',
           quantity: product.qty,
@@ -197,21 +206,22 @@ export default {
     },
     async onApprove (data, actions) {
       const totals = this.$store.getters['cart/getTotals']
-      this.$store.commit('google-tag-manager/SET_ORDER_DETAILS', {
-        total_due: totals.find((t) => t['code'].toString() === 'grand_total')['value'],
-        tax_amount: totals.find((t) => t['code'].toString() === 'tax')['value'],
-        shipping_amount: totals.find((t) => t['code'].toString() === 'shipping')['value'],
-        coupon_code: this.$store.getters['cart/getCoupon'] ? this.$store.getters['cart/getCoupon']['code'] : '',
-        cartId: this.$store.getters['cart/getCartToken']
-      })
+      // this.$store.commit('google-tag-manager/SET_ORDER_DETAILS', {
+      //   total_due: totals.find((t) => t['code'].toString() === 'grand_total')['value'],
+      //   tax_amount: totals.find((t) => t['code'].toString() === 'tax')['value'],
+      //   shipping_amount: totals.find((t) => t['code'].toString() === 'shipping')['value'],
+      //   coupon_code: this.$store.getters['cart/getCoupon'] ? this.$store.getters['cart/getCoupon']['code'] : '',
+      //   cartId: this.$store.getters['cart/getCartToken']
+      // })
+      console.log(data, actions)
       let additionalMethod = {
-        // magento 2 fields expects
-        paypal_express_checkout_token: this.tokenId,
+        paypal_express_checkout_token: this.tokenId ? this.tokenId : data.orderId,
         button: 1,
         paypal_express_checkout_payer_id: data.payerID,
         paypal_express_checkout_redirect_required: false
       }
-      this.$bus.$emit('checkout-do-placeOrder', additionalMethod)
+      this.$store.dispatch('payment-paypal-magento2/setCredentials', additionalMethod)
+      this.$emit('approved')
     },
     onCancel (data) {
       this.$emit('payment-paypal-cancelled', data)
