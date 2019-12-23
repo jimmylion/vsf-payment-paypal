@@ -6,6 +6,7 @@
 import store from '@vue-storefront/core/store'
 import { currentStoreView } from '@vue-storefront/core/lib/multistore'
 import config from 'config'
+import i18n from '@vue-storefront/i18n'
 
 export default {
   name: 'PaypalButton',
@@ -51,9 +52,16 @@ export default {
       })
       if (total.length > 0) {
         if (name === 'tax') {
-          const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
-          return Math.abs(onlyProductsTax.toFixed(2))
+          if (this.$store.state.cart.platformTotals.shipping_incl_tax === 0) {
+            return 0
+          } else {
+            const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
+            return Math.abs(onlyProductsTax.toFixed(2))
+          }
         } else if (name === 'shipping') {
+          if (this.$store.state.cart.platformTotals.shipping_incl_tax === 0) {
+            return 0
+          }
           const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
           const shippingWithoutTax = this.$store.state.cart.platformTotals.shipping_incl_tax - onlyProductsTax
           return Math.abs(shippingWithoutTax.toFixed(2))
@@ -83,14 +91,14 @@ export default {
           name: product.name,
           unit_amount: {
             currency_code: this.currencyCode,
-            value: product.totals.price_incl_tax
+            value: product.special_price && product.isPack ? product.special_price : product.totals.price_incl_tax
           },
-          tax: {
-            currency_code: this.currencyCode,
-            // value: ''
-            // optional tax already set in totals, this is not needed
-            value: (product.totals.price_incl_tax - product.totals.price).toFixed(2)
-          },
+          // tax: {
+          //   currency_code: this.currencyCode,
+          //   // value: ''
+          //   // optional tax already set in totals, this is not needed
+          //   value: (product.totals.price_incl_tax - product.totals.price).toFixed(2)
+          // },
           description: (product.options && product.options.length > 0) ? product.options.map((el) => { return el.value }).join(',') : '',
           quantity: product.qty,
           sku: product.sku,
@@ -178,6 +186,12 @@ export default {
         }).then((result) => {
           this.tokenId = result.token
           return this.tokenId
+        }).catch(err => {
+          this.$store.dispatch('notification/spawnNotification', {
+            type: 'error',
+            message: i18n.t('Could not make an transaction via PayPal, sorry!'),
+            action1: { label: i18n.t('OK'), action: 'close' }
+          })
         })
       })
     },
@@ -213,7 +227,6 @@ export default {
       //   coupon_code: this.$store.getters['cart/getCoupon'] ? this.$store.getters['cart/getCoupon']['code'] : '',
       //   cartId: this.$store.getters['cart/getCartToken']
       // })
-      console.log(data, actions)
       let additionalMethod = {
         paypal_express_checkout_token: this.tokenId ? this.tokenId : data.orderId,
         button: 1,
