@@ -1,5 +1,5 @@
 <template>
-  <div class="paypal-button" />
+  <div :class="express ? 'paypal-button--express' : 'paypal-button'" />
 </template>
 
 <script>
@@ -20,6 +20,10 @@ export default {
         shape: 'rect',
         label: 'paypal'
       })
+    },
+    express: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -42,9 +46,9 @@ export default {
     setButtonAndTotals () {
       window.paypal.Buttons({
         style: this.styling,
-        createOrder: this.createOrderNvp,
+        createOrder: this.createOrderRest,
         onApprove: this.onApprove
-      }).render('.paypal-button')
+      }).render(this.express ? '.paypal-button--express' : '.paypal-button')
     },
     getSegmentTotal (name) {
       const total = this.platformTotal.filter(segment => {
@@ -80,7 +84,7 @@ export default {
           description: 'Need to return an item? We accept returns for unused items in packaging 60 days after you order', // purchase description
           items: this.getProducts(),
           amount: this.getAmount(),
-          shipping: this.getShippingAddress()
+          ...(this.express ? {} : {shipping: this.getShippingAddress()})
         }
       ]
     },
@@ -185,6 +189,7 @@ export default {
           logo: ''
         }).then((result) => {
           this.tokenId = result.token
+          console.log(result)
           return this.tokenId
         }).catch(err => {
           this.$store.dispatch('notification/spawnNotification', {
@@ -210,11 +215,7 @@ export default {
         forceServerSync: true
       }).then(() => {
         return actions.order.create({
-          purchase_units: this.getPurchaseUnits(),
-          application_context: {
-            brand_name: '',
-            shipping_preference: 'SET_PROVIDED_ADDRESS'
-          }
+          purchase_units: this.getPurchaseUnits()
         })
       })
     },
@@ -233,8 +234,34 @@ export default {
         paypal_express_checkout_payer_id: data.payerID,
         paypal_express_checkout_redirect_required: false
       }
+
+      const capture = await actions.order.authorize()
+
+      if (capture.status !== 'COMPLETED') {
+        return false
+      }
+
+      const payer = {
+        email: capture.payer.email_address,
+        country: capture.payer.address,
+        firstname: capture.payer.name.given_name,
+        lastname: capture.payer.name.surname,
+        fullname: `${capture.payer.name.given_name} ${capture.payer.name.surname}`,
+        shipping: {
+          address_line_1: capture.purchase_units[0].shipping.address.address_line_1,
+          address_line_2: capture.purchase_units[0].shipping.address.address_line_2,
+          ...(capture.purchase_units[0].shipping.address.admin_area_1 ? { region: capture.purchase_units[0].shipping.address.admin_area_1 } : {}),
+          city: capture.purchase_units[0].shipping.address.admin_area_2,
+          postal_code: capture.purchase_units[0].shipping.address.postal_code
+        }
+      }
+
       this.$store.dispatch('payment-paypal-magento2/setCredentials', additionalMethod)
       this.$emit('approved')
+      this.$bus.$emit('paypal-instant-checkout-details', { payer })
+      this.$bus.$emit('paypal-instant-checkout-payment-method', { payer })
+      this.$bus.$emit('paypal-instant-checkout-billing', { payer })
+      this.$bus.$emit('paypal-instant-checkout-shipping', { payer })
     },
     onCancel (data) {
       this.$emit('payment-paypal-cancelled', data)
