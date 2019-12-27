@@ -43,13 +43,16 @@ export default {
     }
   },
   methods: {
+
     setButtonAndTotals () {
       window.paypal.Buttons({
         style: this.styling,
-        createOrder: this.createOrderRest,
-        onApprove: this.onApprove
+        createOrder: this.createOrderNvp,
+        onApprove: this.onApprove,
+        onShippingChange: this.onShippingChange
       }).render(this.express ? '.paypal-button--express' : '.paypal-button')
     },
+
     getSegmentTotal (name) {
       const total = this.platformTotal.filter(segment => {
         return segment.code === name
@@ -76,6 +79,7 @@ export default {
         return 0
       }
     },
+
     getPurchaseUnits () {
       return [
         {
@@ -88,6 +92,7 @@ export default {
         }
       ]
     },
+
     getProducts () {
       let products = []
       store.state.cart.cartItems.forEach(product => {
@@ -111,6 +116,7 @@ export default {
       })
       return products
     },
+
     getBillingAddress () {
       return {
         address_line_1: store.state.checkout.paymentDetails.streetAddress,
@@ -121,6 +127,7 @@ export default {
         country_code: store.state.checkout.paymentDetails.country
       }
     },
+
     getShippingAddress () {
       return {
         name: {
@@ -136,6 +143,7 @@ export default {
         }
       }
     },
+
     getAmount () {
       return {
         breakdown: {
@@ -160,6 +168,7 @@ export default {
         currency_code: this.currencyCode
       }
     },
+
     async createOrderNvp (data, actions) {
       return store.dispatch('cart/syncTotals', {
         methodsData: {
@@ -200,6 +209,7 @@ export default {
         })
       })
     },
+
     async createOrderRest (data, actions) {
       return store.dispatch('cart/syncTotals', {
         methodsData: {
@@ -219,6 +229,7 @@ export default {
         })
       })
     },
+
     async onApprove (data, actions) {
       const totals = this.$store.getters['cart/getTotals']
       // this.$store.commit('google-tag-manager/SET_ORDER_DETAILS', {
@@ -235,22 +246,26 @@ export default {
         paypal_express_checkout_redirect_required: false
       }
 
-      const capture = await actions.order.authorize()
+      const capture = await actions.order.capture()
 
       if (capture.status !== 'COMPLETED') {
         return false
       }
+
+      console.log(capture)
+      // debugger
 
       const payer = {
         email: capture.payer.email_address,
         country: capture.payer.address,
         firstname: capture.payer.name.given_name,
         lastname: capture.payer.name.surname,
+        phone: capture.payer.phone.phone_number.national_number,
         fullname: `${capture.payer.name.given_name} ${capture.payer.name.surname}`,
         shipping: {
           address_line_1: capture.purchase_units[0].shipping.address.address_line_1,
           address_line_2: capture.purchase_units[0].shipping.address.address_line_2,
-          ...(capture.purchase_units[0].shipping.address.admin_area_1 ? { region: capture.purchase_units[0].shipping.address.admin_area_1 } : {}),
+          ...(capture.purchase_units[0].shipping.address.admin_area_1 && !capture.purchase_units[0].shipping.address.admin_area_1.includes('=') && !capture.purchase_units[0].shipping.address.admin_area_1.includes('_') ? { region: capture.purchase_units[0].shipping.address.admin_area_1 } : {}),
           city: capture.purchase_units[0].shipping.address.admin_area_2,
           postal_code: capture.purchase_units[0].shipping.address.postal_code
         }
@@ -258,11 +273,53 @@ export default {
 
       this.$store.dispatch('payment-paypal-magento2/setCredentials', additionalMethod)
       this.$emit('approved')
-      this.$bus.$emit('paypal-instant-checkout-details', { payer })
-      this.$bus.$emit('paypal-instant-checkout-payment-method', { payer })
-      this.$bus.$emit('paypal-instant-checkout-billing', { payer })
-      this.$bus.$emit('paypal-instant-checkout-shipping', { payer })
+      if (this.express) {
+        this.$bus.$emit('paypal-instant-checkout-details', { payer })
+        this.$bus.$emit('paypal-instant-checkout-shipping', { payer })
+        this.$bus.$emit('paypal-instant-checkout-payment-method', { payer })
+        this.$bus.$emit('paypal-instant-checkout-billing', { payer })
+      }
     },
+
+    async onShippingChange (data, actions) {
+      try {
+        this.$store.state.checkout.shippingDetails.country = data.shipping_address.country_code
+        await this.$store.dispatch('cart/syncShippingMethods', {})
+        const shippingMethods = this.$store.getters['shipping/shippingMethods']
+        if (!shippingMethods || !shippingMethods.length) {
+          return actions.resolve()
+        }
+
+        // Patch the shipping amount
+        const shippingAmount = shippingMethods[0].price_excl_tax
+        return actions.order.patch([
+            {
+                op: 'replace',
+                path: '/purchase_units/@reference_id==\'default\'/amount',
+                value: {
+                    currency_code: this.currencyCode,
+                    value: (parseFloat(this.getSegmentTotal('subtotal')) + parseFloat(shippingAmount)).toFixed(2),
+                    breakdown: {
+                        item_total: {
+                            currency_code: this.currencyCode,
+                            value: this.getSegmentTotal('subtotal')
+                        },
+                        shipping: {
+                            currency_code: this.currencyCode,
+                            value: shippingAmount
+                        }
+                    }
+                }
+            }
+        ]);
+
+        console.log(data, actions)
+      } catch (err) {
+        console.log('lel', err)
+      }
+      return actions.resolve()
+    },
+
     onCancel (data) {
       this.$emit('payment-paypal-cancelled', data)
     }
