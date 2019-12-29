@@ -14,6 +14,9 @@ export const module: Module<PaypalState, any> = {
     },
     [types.SET_PAYPAL_EXPRESS_CREDENTIALS](state, credentials) {
       state.credentials = credentials
+    },
+    [types.SET_PAYPAL_EXPRESS_USING](state, usingExpress: Boolean) {
+      state.usingExpress = usingExpress
     }
   }
 }

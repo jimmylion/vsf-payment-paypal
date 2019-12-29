@@ -58,8 +58,15 @@ export default {
         return segment.code === name
       })
       if (total.length > 0) {
+        if (this.$store.state.cart.platformTotals.base_discount_amount
+        && this.$store.state.cart.platformTotals.base_discount_amount < 0 && name === 'subtotal') {
+          return this.$store.state.cart.platformTotals.subtotal_incl_tax
+        }
+
         if (name === 'tax') {
           if (this.$store.state.cart.platformTotals.shipping_incl_tax === 0) {
+            return 0
+          } else if (this.$store.state.cart.platformTotals.base_discount_amount && this.$store.state.cart.platformTotals.base_discount_amount < 0) {
             return 0
           } else {
             const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
@@ -68,6 +75,9 @@ export default {
         } else if (name === 'shipping') {
           if (this.$store.state.cart.platformTotals.shipping_incl_tax === 0) {
             return 0
+          }
+          if (this.$store.state.cart.platformTotals.base_discount_amount && this.$store.state.cart.platformTotals.base_discount_amount < 0) {
+            return this.$store.state.cart.platformTotals.base_shipping_incl_tax
           }
           const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
           const shippingWithoutTax = this.$store.state.cart.platformTotals.shipping_incl_tax - onlyProductsTax
@@ -252,7 +262,7 @@ export default {
         return false
       }
 
-      console.log(capture)
+      // console.log(capture)
       // debugger
 
       const payer = {
@@ -274,6 +284,7 @@ export default {
       this.$store.dispatch('payment-paypal-magento2/setCredentials', additionalMethod)
       this.$emit('approved')
       if (this.express) {
+        this.$store.dispatch('payment-paypal-magento2/usingExpress', true)
         this.$bus.$emit('paypal-instant-checkout-details', { payer })
         this.$bus.$emit('paypal-instant-checkout-shipping', { payer })
         this.$bus.$emit('paypal-instant-checkout-payment-method', { payer })
@@ -292,13 +303,23 @@ export default {
 
         // Patch the shipping amount
         const shippingAmount = shippingMethods[0].price_excl_tax
+        let discount = false
+        let value = (parseFloat(this.getSegmentTotal('subtotal')) + parseFloat(shippingAmount)).toFixed(2)
+        if (this.$store.state.cart.platformTotals.base_discount_amount && this.$store.state.cart.platformTotals.base_discount_amount < 0) {
+          value = this.$store.state.cart.platformTotals.base_grand_total
+          discount = {
+            currency_code: this.currencyCode,
+            value: this.getSegmentTotal('discount')
+          }
+        }
+
         return actions.order.patch([
             {
                 op: 'replace',
                 path: '/purchase_units/@reference_id==\'default\'/amount',
                 value: {
                     currency_code: this.currencyCode,
-                    value: (parseFloat(this.getSegmentTotal('subtotal')) + parseFloat(shippingAmount)).toFixed(2),
+                    value,
                     breakdown: {
                         item_total: {
                             currency_code: this.currencyCode,
@@ -307,7 +328,8 @@ export default {
                         shipping: {
                             currency_code: this.currencyCode,
                             value: shippingAmount
-                        }
+                        },
+                        ...(discount ? {discount} : {})
                     }
                 }
             }
