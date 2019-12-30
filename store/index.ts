@@ -3,6 +3,7 @@ import { PaypalState } from '../types/PaypalState'
 import { getters } from './getters'
 import { actions } from './actions'
 import * as types from './mutation-types'
+import Vue from 'vue'
 
 export const module: Module<PaypalState, any> = {
   namespaced: true,
@@ -13,7 +14,7 @@ export const module: Module<PaypalState, any> = {
       state.methods = paymentMethods
     },
     [types.SET_PAYPAL_EXPRESS_CREDENTIALS](state, credentials) {
-      state.credentials = credentials
+      Vue.set(state, 'credentials', credentials)
     },
     [types.SET_PAYPAL_EXPRESS_USING](state, usingExpress: Boolean) {
       state.usingExpress = usingExpress

@@ -256,9 +256,12 @@ export default {
         paypal_express_checkout_redirect_required: false
       }
 
-      const capture = await actions.order.capture()
+      // console.log(actions)
 
-      if (capture.status !== 'COMPLETED') {
+      const capture = await actions.order.get()
+      // console.log(capture)
+
+      if (capture.status !== 'APPROVED') {
         return false
       }
 
@@ -339,7 +342,7 @@ export default {
           value = this.$store.state.cart.platformTotals.base_grand_total
           discount = {
             currency_code: this.currencyCode,
-            value: this.getSegmentTotal('discount')
+            value: this.getSegmentTotal('discount').toFixed(2)
           }
         }
 
@@ -353,11 +356,11 @@ export default {
                     breakdown: {
                         item_total: {
                             currency_code: this.currencyCode,
-                            value: this.getSegmentTotal('subtotal')
+                            value: this.getSegmentTotal('subtotal').toFixed(2)
                         },
                         shipping: {
                             currency_code: this.currencyCode,
-                            value: shippingAmount
+                            value: shippingAmount.toFixed(2)
                         },
                         ...(discount ? {discount} : {})
                     }
