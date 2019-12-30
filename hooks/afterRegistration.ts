@@ -12,12 +12,18 @@ export function afterRegistration({ Vue, config, store, isServer }) {
     }
   }
 
+  const resetCredentials = () => {
+    store.dispatch('payment-paypal-magento2/setCredentials', null)
+  }
+
   if (!isServer) {
     Vue.prototype.$bus.$on('set-unique-payment-methods', methods => {
       store.commit('payment-paypal-magento2/' + types.SET_BACKEND_PAYMENT_PAYPAL_EXPRESS, methods)
     })
 
     Vue.prototype.$bus.$on('checkout-before-placeOrder', placeOrder)
+
+    Vue.prototype.$bus.$on('checkout-after-created', resetCredentials)
 
     // Mount the info component when required
     Vue.prototype.$bus.$on('checkout-payment-method-changed', (paymentMethodCode) => {
