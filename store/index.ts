@@ -17,6 +17,9 @@ export const module: Module<PaypalState, any> = {
     },
     [types.SET_PAYPAL_EXPRESS_USING](state, usingExpress: Boolean) {
       state.usingExpress = usingExpress
-    }
+    },
+    [types.SET_COUNTRIES](state, countries: Array<any>) {
+      state.countries = countries
+    },
   }
 }

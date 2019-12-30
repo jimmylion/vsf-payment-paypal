@@ -2,5 +2,6 @@ export interface PaypalState {
   trans: string[],
   methods: null,
   credentials: null,
-  usingExpress: Boolean
+  usingExpress: Boolean,
+  countries: Array<any>
 }

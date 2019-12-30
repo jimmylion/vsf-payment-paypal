@@ -262,9 +262,6 @@ export default {
         return false
       }
 
-      // console.log(capture)
-      // debugger
-
       const payer = {
         email: capture.payer.email_address,
         country: capture.payer.address,
@@ -295,10 +292,43 @@ export default {
     async onShippingChange (data, actions) {
       try {
         this.$store.state.checkout.shippingDetails.country = data.shipping_address.country_code
-        await this.$store.dispatch('cart/syncShippingMethods', {})
+        // await this.$bus.$emit('checkout-before-shippingMethods', data.shipping_address.country_code)
+        await this.$store.dispatch('cart/syncTotals', { forceServerSync: true })
         const shippingMethods = this.$store.getters['shipping/shippingMethods']
+
         if (!shippingMethods || !shippingMethods.length) {
-          return actions.resolve()
+          return actions.reject()
+        }
+
+        console.log(data)
+
+        const regionName = data.shipping_address.state
+        const countries = this.$store.state['payment-paypal-magento2'].countries
+        if (!countries) {
+          return actions.reject()
+        }
+        const country = countries.find(country => country.id === data.shipping_address.country_code)
+        if (!country) {
+          this.$store.dispatch("notification/spawnNotification", {
+            action1: { label: this.$t("OK") },
+            message:
+              "This country is not supported in this store code.",
+            type: "error"
+          });
+          return actions.reject()
+        }
+
+        if (country.available_regions) {
+          const region = country.available_regions.find(region => region.name === regionName)
+          if (!region) {
+            this.$store.dispatch("notification/spawnNotification", {
+              action1: { label: this.$t("OK") },
+              message:
+                "Unsupported region",
+              type: "error"
+            });
+            return actions.reject()
+          }
         }
 
         // Patch the shipping amount
