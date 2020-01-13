@@ -64,9 +64,13 @@ export default {
         }
 
         if (name === 'tax') {
+          const grandTotal = this.$store.state.cart.platformTotals.base_grand_total
+          
           if (this.$store.state.cart.platformTotals.shipping_incl_tax === 0) {
             return 0
           } else if (this.$store.state.cart.platformTotals.base_discount_amount && this.$store.state.cart.platformTotals.base_discount_amount < 0) {
+            return 0
+          } else if (grandTotal === this.$store.state.cart.platformTotals.subtotal_incl_tax + this.$store.state.cart.platformTotals.base_shipping_incl_tax) {
             return 0
           } else {
             const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
@@ -78,6 +82,10 @@ export default {
           }
           if (this.$store.state.cart.platformTotals.base_discount_amount && this.$store.state.cart.platformTotals.base_discount_amount < 0) {
             return this.$store.state.cart.platformTotals.base_shipping_incl_tax
+          }
+          const grandTotal = this.$store.state.cart.platformTotals.base_grand_total
+          if (grandTotal === this.$store.state.cart.platformTotals.subtotal_incl_tax + this.$store.state.cart.platformTotals.base_shipping_incl_tax) {
+            return this.$store.state.cart.platformTotals.base_shipping_incl_tax.toFixed(2)
           }
           const onlyProductsTax = this.$store.state.cart.platformTotals.subtotal_incl_tax - this.$store.state.cart.platformTotals.subtotal_with_discount
           const shippingWithoutTax = this.$store.state.cart.platformTotals.shipping_incl_tax - onlyProductsTax
