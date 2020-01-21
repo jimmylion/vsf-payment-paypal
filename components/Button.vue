@@ -216,7 +216,7 @@ export default {
           logo: ''
         }).then((result) => {
           this.tokenId = result.token
-          console.log(result)
+          // console.log(result)
           return this.tokenId
         }).catch(err => {
           this.$store.dispatch('notification/spawnNotification', {
@@ -311,7 +311,7 @@ export default {
           return actions.reject()
         }
 
-        console.log(data)
+        // console.log(data)
 
         const regionName = data.shipping_address.state
         const countries = this.$store.state['payment-paypal-magento2'].countries
@@ -376,9 +376,9 @@ export default {
             }
         ]);
 
-        console.log(data, actions)
+        // console.log(data, actions)
       } catch (err) {
-        console.log('lel', err)
+        console.log(err)
       }
       return actions.resolve()
     },
