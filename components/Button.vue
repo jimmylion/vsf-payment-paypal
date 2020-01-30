@@ -311,9 +311,7 @@ export default {
           return actions.reject()
         }
 
-        // console.log(data)
-
-        const regionName = data.shipping_address.state
+        const regionNameOrCode = data.shipping_address.state
         const countries = this.$store.state['payment-paypal-magento2'].countries
         if (!countries) {
           return actions.reject()
@@ -330,7 +328,7 @@ export default {
         }
 
         if (country.available_regions) {
-          const region = country.available_regions.find(region => region.name === regionName)
+          const region = country.available_regions.find(region => region.name === regionNameOrCode || region.code === regionNameOrCode)
           if (!region) {
             this.$store.dispatch("notification/spawnNotification", {
               action1: { label: this.$t("OK") },
