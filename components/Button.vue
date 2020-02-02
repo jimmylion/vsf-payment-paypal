@@ -195,7 +195,7 @@ export default {
           region: store.state.checkout.shippingDetails.region,
           region_id: store.state.checkout.shippingDetails.regionId,
           region_code: store.state.checkout.shippingDetails.regionCode,
-          method_code: store.state.checkout.shippingDetails.shippingMethod,
+          method_code: typeof store.state.checkout.shippingDetails.shippingMethod ? store.state.checkout.shippingDetails.shippingMethod : store.state.checkout.shippingDetails.shippingMethod.method_code,
           carrier_code: store.state.checkout.shippingDetails.shippingCarrier,
           payment_method: null
         },
