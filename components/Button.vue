@@ -139,7 +139,7 @@ export default {
       return {
         address_line_1: store.state.checkout.paymentDetails.streetAddress,
         address_line_2: store.state.checkout.paymentDetails.apartmentNumber,
-        admin_area_1: store.state.checkout.paymentDetails.region_code,
+        admin_area_1: store.state.checkout.paymentDetails.region_code || store.state.checkout.shippingDetails.state,
         admin_area_2: store.state.checkout.paymentDetails.city,
         postal_code: store.state.checkout.paymentDetails.zipCode,
         country_code: store.state.checkout.paymentDetails.country
@@ -154,7 +154,7 @@ export default {
         address: {
           address_line_1: store.state.checkout.shippingDetails.streetAddress,
           address_line_2: store.state.checkout.shippingDetails.apartmentNumber,
-          admin_area_1: store.state.checkout.shippingDetails.region_code,
+          admin_area_1: store.state.checkout.shippingDetails.region_code || store.state.checkout.shippingDetails.state,
           admin_area_2: store.state.checkout.shippingDetails.city,
           postal_code: store.state.checkout.shippingDetails.zipCode,
           country_code: store.state.checkout.shippingDetails.country
