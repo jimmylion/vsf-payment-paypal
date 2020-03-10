@@ -2,11 +2,13 @@ import { Module } from 'vuex'
 import { PaypalState } from '../types/PaypalState'
 import { getters } from './getters'
 import { actions } from './actions'
+import { state } from './state'
 import * as types from './mutation-types'
 import Vue from 'vue'
 
 export const module: Module<PaypalState, any> = {
   namespaced: true,
+  state,
   actions,
   getters,
   mutations: {
@@ -22,5 +24,9 @@ export const module: Module<PaypalState, any> = {
     [types.SET_COUNTRIES](state, countries: Array<any>) {
       state.countries = countries
     },
+    [types.SET_FILLING](state, status: Boolean) {
+      state.fillingAfterExpress = status
+    }
+    
   }
 }

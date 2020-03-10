@@ -3,5 +3,6 @@ export interface PaypalState {
   methods: null,
   credentials: null,
   usingExpress: Boolean,
-  countries: Array<any>
+  countries: Array<any>,
+  fillingAfterExpress: Boolean
 }

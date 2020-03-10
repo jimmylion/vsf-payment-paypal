@@ -2,7 +2,7 @@ import { PaypalState } from '../types/PaypalState'
 import { ActionTree } from 'vuex'
 import config from 'config'
 import { adjustMultistoreApiUrl } from '@vue-storefront/core/lib/multistore'
-import { SET_PAYPAL_EXPRESS_CREDENTIALS, SET_PAYPAL_EXPRESS_USING, SET_COUNTRIES } from 'src/modules/payment-paypal/store/mutation-types'
+import { SET_FILLING, SET_PAYPAL_EXPRESS_CREDENTIALS, SET_PAYPAL_EXPRESS_USING, SET_COUNTRIES } from 'src/modules/payment-paypal/store/mutation-types'
 
 // it's a good practice for all actions to return Promises with effect of their execution
 export const actions: ActionTree<PaypalState, any> = {
@@ -44,4 +44,8 @@ export const actions: ActionTree<PaypalState, any> = {
   setCountries ({ commit }, countries) {
     commit(SET_COUNTRIES, countries)
   },
+
+  fillingAfterExpress( { commit }, status) {
+    commit(SET_FILLING, status)
+  }
 }

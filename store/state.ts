@@ -5,5 +5,6 @@ export const state: PaypalState = {
   methods: null,
   credentials: null,
   usingExpress: false,
-  countries: []
+  countries: [],
+  fillingAfterExpress: false
 }

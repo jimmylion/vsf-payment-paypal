@@ -292,11 +292,18 @@ export default {
       this.$store.dispatch('payment-paypal-magento2/setCredentials', additionalMethod)
       this.$emit('approved')
       if (this.express) {
+        this.$store.dispatch('payment-paypal-magento2/fillingAfterExpress', true)
         this.$store.dispatch('payment-paypal-magento2/usingExpress', true)
         this.$bus.$emit('paypal-instant-checkout-details', { payer })
         this.$bus.$emit('paypal-instant-checkout-shipping', { payer })
         this.$bus.$emit('paypal-instant-checkout-payment-method', { payer })
-        this.$bus.$emit('paypal-instant-checkout-billing', { payer })
+
+        const interval = setInterval(() => {
+          if (this.$store.state.checkout.shippingDetails && this.$store.state.checkout.shippingDetails.shippingCarrier && this.$store.state.checkout.shippingDetails.shippingMethod) {
+            this.$bus.$emit('paypal-instant-checkout-billing', { payer })
+            clearInterval(interval)
+          }
+        }, 10)
       }
     },
 
