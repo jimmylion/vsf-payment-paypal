@@ -318,7 +318,7 @@ export default {
           return actions.reject()
         }
 
-        const regionNameOrCode = data.shipping_address.state
+        const regionNameOrCode = data.shipping_address.state.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         const countries = this.$store.state['payment-paypal-magento2'].countries
         if (!countries) {
           return actions.reject()
@@ -335,7 +335,7 @@ export default {
         }
 
         if (country.available_regions) {
-          const region = country.available_regions.find(region => region.name === regionNameOrCode || region.code === regionNameOrCode)
+          const region = country.available_regions.find(region => region.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode || region.code.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode)
           if (!region) {
             this.$store.dispatch("notification/spawnNotification", {
               action1: { label: this.$t("OK") },
