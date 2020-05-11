@@ -7,6 +7,7 @@ import store from '@vue-storefront/core/store'
 import { currentStoreView } from '@vue-storefront/core/lib/multistore'
 import config from 'config'
 import i18n from '@vue-storefront/i18n'
+import PaypalRegionCodeToM2 from 'src/modules/payment-paypal/components/PaypalRegionCodeToM2'
 
 export default {
   name: 'PaypalButton',
@@ -26,6 +27,9 @@ export default {
       default: false
     }
   },
+  mixins: [
+    PaypalRegionCodeToM2
+  ],
   data () {
     const storeView = currentStoreView()
     return {
@@ -273,9 +277,11 @@ export default {
         return false
       }
 
+      console.log(capture)
+
       const payer = {
         email: capture.payer.email_address,
-        country: capture.payer.address,
+        country: capture.purchase_units[0].shipping.address.country_code || capture.payer.address,
         firstname: capture.payer.name.given_name,
         lastname: capture.payer.name.surname,
         phone: capture.payer.phone.phone_number.national_number,
@@ -333,9 +339,16 @@ export default {
           });
           return actions.reject()
         }
-
+        console.log(data)
         if (country.available_regions) {
-          const region = country.available_regions.find(region => region.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode || region.code.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode)
+          
+          let mappedState = PaypalRegionCodeToM2(country.id, data.shipping_address.state)
+          const region = country.available_regions.find(
+            region => region.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode
+            || region.code.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode
+            || region.code === mappedState
+          )
+
           if (!region) {
             this.$store.dispatch("notification/spawnNotification", {
               action1: { label: this.$t("OK") },
