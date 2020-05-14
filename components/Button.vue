@@ -151,6 +151,21 @@ export default {
     },
 
     getShippingAddress () {
+      let regionCode = store.state.checkout.shippingDetails.region_code || store.state.checkout.shippingDetails.state
+      const countryCode = store.state.checkout.shippingDetails.country
+      const countryObj = Array.isArray(store.state['payment-paypal-magento2'].countries) 
+        && store.state['payment-paypal-magento2'].countries.find(country => country.id == countryCode || country.two_letter_abbreviation == countryCode)
+
+      // debugger;
+      if (countryObj && countryObj.available_regions && !regionCode && (store.state.checkout.shippingDetails.region || store.state.checkout.shippingDetails.region_id)) {
+        const regionId = store.state.checkout.shippingDetails.region || store.state.checkout.shippingDetails.region_id
+        const regionObj = Array.isArray(countryObj.available_regions)
+          && countryObj.available_regions.find(region => region.id == regionId)
+        
+        if (regionObj) {
+          regionCode = regionObj.code
+        }
+      }
       return {
         name: {
           full_name: store.state.checkout.shippingDetails.firstName + ' ' + store.state.checkout.shippingDetails.lastName
@@ -158,7 +173,7 @@ export default {
         address: {
           address_line_1: store.state.checkout.shippingDetails.streetAddress,
           address_line_2: store.state.checkout.shippingDetails.apartmentNumber,
-          admin_area_1: store.state.checkout.shippingDetails.region_code || store.state.checkout.shippingDetails.state,
+          admin_area_1: regionCode,
           admin_area_2: store.state.checkout.shippingDetails.city,
           postal_code: store.state.checkout.shippingDetails.zipCode,
           country_code: store.state.checkout.shippingDetails.country
@@ -199,7 +214,9 @@ export default {
           region: store.state.checkout.shippingDetails.region,
           region_id: store.state.checkout.shippingDetails.regionId,
           region_code: store.state.checkout.shippingDetails.regionCode,
-          method_code: typeof store.state.checkout.shippingDetails.shippingMethod ? store.state.checkout.shippingDetails.shippingMethod : store.state.checkout.shippingDetails.shippingMethod.method_code,
+          method_code: typeof store.state.checkout.shippingDetails.shippingMethod == 'string'
+          ? store.state.checkout.shippingDetails.shippingMethod
+          : store.state.checkout.shippingDetails.shippingMethod.method_code,
           carrier_code: store.state.checkout.shippingDetails.shippingCarrier,
           payment_method: null
         },
@@ -339,10 +356,10 @@ export default {
           });
           return actions.reject()
         }
-        console.log(data)
+        // console.log(data)
         if (country.available_regions) {
           
-          let mappedState = PaypalRegionCodeToM2(country.id, data.shipping_address.state)
+          let mappedState = this.paypalRegionCodeToM2(country.id, data.shipping_address.state)
           const region = country.available_regions.find(
             region => region.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode
             || region.code.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === regionNameOrCode
