@@ -19,18 +19,27 @@ export const actions: ActionTree<PaypalState, any> = {
   //     body: JSON.stringify(params)
   //   }).then(resp => { return resp.json() })
   // },
-  setExpressCheckout({ }, params) {
+  async setExpressCheckout({ }, params) {
     let url = config.paymentPaypalMagento2.endpoint.setExpressCheckout
     url = config.storeViews.multistore ? adjustMultistoreApiUrl(url) : url
-    return fetch(url, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then(resp => { return resp.json() })
+    try {
+      return await (await fetch(url, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+      })).json()
+    } catch (err) {
+      console.log(err)
+      // this.$store.dispatch('notification/spawnNotification', {
+      //   type: 'error',
+      //   message: i18n.t('Could not make an transaction via PayPal, sorry!'),
+      //   action1: { label: i18n.t('OK'), action: 'close' }
+      // })
+    }
   },
 
   setCredentials ({ commit }, credentials) {

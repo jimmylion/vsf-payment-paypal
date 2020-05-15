@@ -236,16 +236,27 @@ export default {
           total_type: 'EstimatedTotal',
           logo: ''
         }).then((result) => {
+          if (result.error) {
+            this.$store.dispatch('notification/spawnNotification', {
+              type: 'error',
+              message: result.error,
+              action1: { label: i18n.t('OK'), action: 'close' }
+            })
+            return
+          }
           this.tokenId = result.token
           // console.log(result)
           return this.tokenId
         }).catch(err => {
+          // console.log(err)
           this.$store.dispatch('notification/spawnNotification', {
             type: 'error',
             message: i18n.t('Could not make an transaction via PayPal, sorry!'),
             action1: { label: i18n.t('OK'), action: 'close' }
           })
         })
+      }).catch(err => {
+        console.log(err)
       })
     },
 
