@@ -368,7 +368,8 @@ export default {
           return actions.reject()
         }
         // console.log(data)
-        if (country.available_regions) {
+        const allowUnsupportedRegion = config.paymentPaypalMagento2.allowUnsupportedRegion
+        if (!allowUnsupportedRegion && country.available_regions) {
           
           let mappedState = this.paypalRegionCodeToM2(country.id, data.shipping_address.state)
           const region = country.available_regions.find(
