@@ -305,15 +305,23 @@ export default {
         return false
       }
 
-      console.log(capture)
+      const fullname = capture.purchase_units[0].shipping.name.full_name
+      let nameParts = fullname.split(' ')
+      // Fallback if some fullname does not have a space
+      if (nameParts.length === 1) {
+        nameParts = [
+          fullname.substr(0, fullname.length/2),
+          fullname.substr(fullname.length/2, fullname.length)
+        ]
+      }
 
       const payer = {
         email: capture.payer.email_address,
         country: capture.purchase_units[0].shipping.address.country_code || capture.payer.address,
-        firstname: capture.payer.name.given_name,
-        lastname: capture.payer.name.surname,
+        firstname: nameParts[0],
+        lastname: nameParts[1],
         phone: capture.payer.phone.phone_number.national_number,
-        fullname: `${capture.payer.name.given_name} ${capture.payer.name.surname}`,
+        fullname,
         shipping: {
           address_line_1: capture.purchase_units[0].shipping.address.address_line_1,
           address_line_2: capture.purchase_units[0].shipping.address.address_line_2,
@@ -326,6 +334,7 @@ export default {
       this.$store.dispatch('payment-paypal-magento2/setCredentials', additionalMethod)
       this.$emit('approved')
       if (this.express) {
+        console.log('Kepczur', capture)
         this.$store.dispatch('payment-paypal-magento2/fillingAfterExpress', true)
         this.$store.dispatch('payment-paypal-magento2/usingExpress', true)
         this.$bus.$emit('paypal-instant-checkout-details', { payer })
