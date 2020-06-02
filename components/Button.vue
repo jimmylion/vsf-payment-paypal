@@ -334,7 +334,7 @@ export default {
       this.$store.dispatch('payment-paypal-magento2/setCredentials', additionalMethod)
       this.$emit('approved')
       if (this.express) {
-        console.log('Kepczur', capture)
+        // console.log('Kepczur', capture)
         this.$store.dispatch('payment-paypal-magento2/fillingAfterExpress', true)
         this.$store.dispatch('payment-paypal-magento2/usingExpress', true)
         this.$bus.$emit('paypal-instant-checkout-details', { payer })
