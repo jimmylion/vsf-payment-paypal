@@ -17,7 +17,7 @@ export default {
       required: false,
       default: () => ({
         layout: 'vertical',
-        color: 'blue',
+        color: 'gold',
         shape: 'rect',
         label: 'paypal'
       })
