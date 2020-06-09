@@ -1,5 +1,8 @@
 <template>
-  <div :class="express ? 'paypal-button--express' : 'paypal-button'" />
+  <div :class="[
+    express ? 'paypal-button--express' : 'paypal-button',
+    `paypal-id-${uniqueReference}`
+  ]" />
 </template>
 
 <script>
@@ -25,6 +28,10 @@ export default {
     express: {
       type: Boolean,
       default: false
+    },
+    uniqueReference: {
+      type: String,
+      default: ''
     }
   },
   mixins: [
@@ -54,7 +61,7 @@ export default {
         createOrder: this.createOrderNvp,
         onApprove: this.onApprove,
         onShippingChange: this.onShippingChange
-      }).render(this.express ? '.paypal-button--express' : '.paypal-button')
+      }).render(`.paypal-id-${this.uniqueReference}`)
     },
 
     getSegmentTotal (name) {
