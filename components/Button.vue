@@ -22,7 +22,8 @@ export default {
         layout: 'vertical',
         color: 'gold',
         shape: 'rect',
-        label: 'paypal'
+        label: 'paypal',
+        height: 50
       })
     },
     express: {
