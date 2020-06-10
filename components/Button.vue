@@ -328,7 +328,7 @@ export default {
         country: capture.purchase_units[0].shipping.address.country_code || capture.payer.address,
         firstname: nameParts[0],
         lastname: nameParts[1],
-        phone: capture.payer.phone.phone_number.national_number,
+        phone: capture.payer && capture.payer.phone && capture.payer.phone.phone_number && capture.payer.phone.phone_number.national_number,
         fullname,
         shipping: {
           address_line_1: capture.purchase_units[0].shipping.address.address_line_1,
