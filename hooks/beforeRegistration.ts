@@ -7,7 +7,8 @@ export function beforeRegistration({ Vue, config, store, isServer }) {
   if (!isServer) {
     const storeView = currentStoreView()
     const { currencyCode } = storeView.i18n
-    const clientId = config.paymentPaypalMagento2.clientId
+    const { storeCode } = storeView
+    const clientId = config.paymentPaypalMagento2.dedicated && config.paymentPaypalMagento2.dedicated[storeCode] && config.paymentPaypalMagento2.dedicated[storeCode].clientId ? config.paymentPaypalMagento2.dedicated[storeCode].clientId : config.paymentPaypalMagento2.clientId
     const sdkUrl = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currencyCode}&disable-funding=card,credit&intent=authorize`
     var script = document.createElement('script')
     script.setAttribute('src', sdkUrl)
